@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { DailySummary, UserSummary } from './types';
+import { SummaryCards } from './components/SummaryCards';
 import { DauChart } from './components/DauChart';
+import { CodeActivityChart } from './components/CodeActivityChart';
 import { ModeBreakdown } from './components/ModeBreakdown';
 import { UserTable } from './components/UserTable';
 import './App.css';
@@ -47,12 +49,21 @@ function App() {
       <h1>GitHub Copilot Usage Dashboard</h1>
 
       <section className="chart-section">
+        <SummaryCards data={daily} />
+      </section>
+
+      <section className="chart-section">
         <h2>DAU・プロンプト数推移</h2>
         <DauChart data={daily} />
       </section>
 
       <section className="chart-section">
-        <h2>モード別利用状況（構成比）</h2>
+        <h2>コード生成・承認・Agent 変更量</h2>
+        <CodeActivityChart data={daily} />
+      </section>
+
+      <section className="chart-section">
+        <h2>チャットモード別利用状況（構成比）</h2>
         <ModeBreakdown data={daily} />
       </section>
 

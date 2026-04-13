@@ -4,6 +4,7 @@ export interface DailySummary {
   total_active_users: number;
   user_initiated_interaction_count: number;
   code_generation_activity_count: number;
+  code_acceptance_activity_count: number;
   chat_panel_agent_mode: number;
   chat_panel_ask_mode: number;
   chat_panel_edit_mode: number;
@@ -17,6 +18,7 @@ export interface UserSummary {
   active_days: number;
   user_initiated_interaction_count: number;
   code_generation_activity_count: number;
+  code_acceptance_activity_count: number;
   chat_panel_agent_mode: number;
   chat_panel_ask_mode: number;
   chat_panel_edit_mode: number;

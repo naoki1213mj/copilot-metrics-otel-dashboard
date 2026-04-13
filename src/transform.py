@@ -33,6 +33,7 @@ METRIC_COLUMNS = [
     "total_active_users",
     "user_initiated_interaction_count",
     "code_generation_activity_count",
+    "code_acceptance_activity_count",
     "chat_panel_agent_mode",
     "chat_panel_ask_mode",
     "chat_panel_edit_mode",

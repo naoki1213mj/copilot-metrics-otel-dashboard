@@ -40,6 +40,7 @@ FIELD_RANGES: dict[str, tuple[int, int]] = {
     "total_active_users": (5, 15),
     "user_initiated_interaction_count": (50, 300),
     "code_generation_activity_count": (100, 500),
+    "code_acceptance_activity_count": (60, 350),
     "chat_panel_agent_mode": (0, 50),
     "chat_panel_ask_mode": (20, 100),
     "chat_panel_edit_mode": (10, 80),
