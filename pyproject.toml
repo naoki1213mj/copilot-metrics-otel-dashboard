@@ -1,0 +1,18 @@
+[project]
+name = "copilot-metrics-otel-dashboard"
+version = "0.1.0"
+description = "GitHub Copilot usage metrics dashboard with OTel tracing"
+requires-python = ">=3.14"
+dependencies = [
+    "azure-monitor-opentelemetry>=1.8.7",
+    "httpx>=0.28.1",
+    "opentelemetry-instrumentation-httpx>=0.61b0",
+    "polars>=1.0,<1.30",
+    "python-dotenv>=1.2.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "ruff>=0.15.10",
+]
