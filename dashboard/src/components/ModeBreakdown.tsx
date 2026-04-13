@@ -20,7 +20,6 @@ interface ModeBreakdownDatum {
   day: string;
   agent_ratio: number;
   ask_ratio: number;
-  plan_ratio: number;
   custom_ratio: number;
 }
 
@@ -40,12 +39,15 @@ const formatPercentage = (value: number): string =>
   `${value.toLocaleString('ja-JP', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
 
 // ModeBreakdown コンポーネント
+// API フィールド chat_panel_edit_mode は旧 Edit モードの残留データ。
+// 現在の Copilot では Agent が Edit 機能を吸収しているため、Agent に合算して表示する。
 export const ModeBreakdown: React.FC<ModeBreakdownProps> = ({ data }) => {
   const chartData: ModeBreakdownDatum[] = data.map((item) => {
+    // Agent + 旧 Edit を合算（プロダクト上は Agent が吸収）
+    const agentTotal = item.chat_panel_agent_mode + item.chat_panel_edit_mode;
     const total =
-      item.chat_panel_agent_mode +
+      agentTotal +
       item.chat_panel_ask_mode +
-      item.chat_panel_edit_mode +
       item.chat_panel_custom_mode;
 
     if (total === 0) {
@@ -53,16 +55,14 @@ export const ModeBreakdown: React.FC<ModeBreakdownProps> = ({ data }) => {
         day: item.day,
         agent_ratio: 0,
         ask_ratio: 0,
-        plan_ratio: 0,
         custom_ratio: 0,
       };
     }
 
     return {
       day: item.day,
-      agent_ratio: (item.chat_panel_agent_mode / total) * 100,
+      agent_ratio: (agentTotal / total) * 100,
       ask_ratio: (item.chat_panel_ask_mode / total) * 100,
-      plan_ratio: (item.chat_panel_edit_mode / total) * 100,
       custom_ratio: (item.chat_panel_custom_mode / total) * 100,
     };
   });
@@ -102,13 +102,12 @@ export const ModeBreakdown: React.FC<ModeBreakdownProps> = ({ data }) => {
             const labelMap: { [key: string]: string } = {
               'Agent': 'Agent',
               'Ask': 'Ask',
-              'Plan': 'Plan',
-              'Custom': 'Custom',
+              'Custom Agent': 'Custom Agent',
             };
             return labelMap[value] || value;
           }}
         />
-        {/* Agent (Indigo) */}
+        {/* Agent (Indigo) — chat_panel_agent_mode + chat_panel_edit_mode を合算 */}
         <Bar
           dataKey="agent_ratio"
           stackId="mode"
@@ -122,19 +121,12 @@ export const ModeBreakdown: React.FC<ModeBreakdownProps> = ({ data }) => {
           fill="#0ea5e9"
           name="Ask"
         />
-        {/* Plan (Amber) — API フィールドは chat_panel_edit_mode だが、Edit → Plan にリネーム済み */}
-        <Bar
-          dataKey="plan_ratio"
-          stackId="mode"
-          fill="#f59e0b"
-          name="Plan"
-        />
-        {/* Custom (Pink) */}
+        {/* Custom Agent (Pink) */}
         <Bar
           dataKey="custom_ratio"
           stackId="mode"
           fill="#ec4899"
-          name="Custom"
+          name="Custom Agent"
         />
       </BarChart>
     </ResponsiveContainer>
