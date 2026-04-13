@@ -20,7 +20,7 @@ interface ModeBreakdownDatum {
   day: string;
   agent_ratio: number;
   ask_ratio: number;
-  edit_ratio: number;
+  plan_ratio: number;
   custom_ratio: number;
 }
 
@@ -53,7 +53,7 @@ export const ModeBreakdown: React.FC<ModeBreakdownProps> = ({ data }) => {
         day: item.day,
         agent_ratio: 0,
         ask_ratio: 0,
-        edit_ratio: 0,
+        plan_ratio: 0,
         custom_ratio: 0,
       };
     }
@@ -62,7 +62,7 @@ export const ModeBreakdown: React.FC<ModeBreakdownProps> = ({ data }) => {
       day: item.day,
       agent_ratio: (item.chat_panel_agent_mode / total) * 100,
       ask_ratio: (item.chat_panel_ask_mode / total) * 100,
-      edit_ratio: (item.chat_panel_edit_mode / total) * 100,
+      plan_ratio: (item.chat_panel_edit_mode / total) * 100,
       custom_ratio: (item.chat_panel_custom_mode / total) * 100,
     };
   });
@@ -100,41 +100,41 @@ export const ModeBreakdown: React.FC<ModeBreakdownProps> = ({ data }) => {
           formatter={(value: string) => {
             // ラベルを日本語に変換
             const labelMap: { [key: string]: string } = {
-              'Agent モード': 'Agent モード',
-              'Ask モード': 'Ask モード',
-              'Edit モード': 'Edit モード',
-              'Custom モード': 'Custom モード',
+              'Agent': 'Agent',
+              'Ask': 'Ask',
+              'Plan': 'Plan',
+              'Custom': 'Custom',
             };
             return labelMap[value] || value;
           }}
         />
-        {/* Agent モード (Indigo) */}
+        {/* Agent (Indigo) */}
         <Bar
           dataKey="agent_ratio"
           stackId="mode"
           fill="#6366f1"
-          name="Agent モード"
+          name="Agent"
         />
-        {/* Ask モード (Sky) */}
+        {/* Ask (Sky) */}
         <Bar
           dataKey="ask_ratio"
           stackId="mode"
           fill="#0ea5e9"
-          name="Ask モード"
+          name="Ask"
         />
-        {/* Edit モード (Amber) */}
+        {/* Plan (Amber) — API フィールドは chat_panel_edit_mode だが、Edit → Plan にリネーム済み */}
         <Bar
-          dataKey="edit_ratio"
+          dataKey="plan_ratio"
           stackId="mode"
           fill="#f59e0b"
-          name="Edit モード"
+          name="Plan"
         />
-        {/* Custom モード (Pink) */}
+        {/* Custom (Pink) */}
         <Bar
           dataKey="custom_ratio"
           stackId="mode"
           fill="#ec4899"
-          name="Custom モード"
+          name="Custom"
         />
       </BarChart>
     </ResponsiveContainer>
