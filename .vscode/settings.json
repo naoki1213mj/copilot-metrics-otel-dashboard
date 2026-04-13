@@ -1,0 +1,25 @@
+{
+  "[markdown]": {
+    "editor.formatOnSave": false,
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": false
+    }
+  },
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "[typescriptreact]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "python.defaultInterpreterPath": ".venv/bin/python",
+  "chat.tools.terminal.autoApprove": {
+    "ruff": true,
+    "uv": true,
+    "npm": true
+  }
+}

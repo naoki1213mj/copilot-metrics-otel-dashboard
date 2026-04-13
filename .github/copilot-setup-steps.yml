@@ -1,0 +1,6 @@
+steps:
+  - run: |
+      pip install uv
+      uv sync
+  - run: |
+      cd dashboard && npm ci

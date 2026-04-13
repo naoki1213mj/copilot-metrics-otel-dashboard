@@ -1,0 +1,28 @@
+@"
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.ruff_cache/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# uv
+.python-version
+
+# 環境変数
+.env
+.env.local
+
+# azd
+.azure/
+
+# Windows
+Thumbs.db
+
+# データ出力
+dashboard/public/data/*.json
+"@ | Out-File -FilePath .gitignore -Encoding utf8
