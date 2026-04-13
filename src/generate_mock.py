@@ -791,6 +791,18 @@ def generate_mock_data(
     return org_rows, user_rows
 
 
+def generate_mock_bundle(
+    *,
+    seed: int | None = 42,
+    days: Sequence[date] | None = None,
+    users: Sequence[dict[str, object]] | None = None,
+) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    """シード付きでモックデータを生成する。"""
+    if seed is not None:
+        random.seed(seed)
+    return generate_mock_data(days=days, users=users)
+
+
 def sample_range(
     value_range: tuple[int, int],
     *,
@@ -871,12 +883,18 @@ def count_unique_users(
     return len(matches)
 
 
+def rows_to_ndjson_bytes(rows: Sequence[dict[str, object]]) -> bytes:
+    """行リストを NDJSON バイト列に変換する。"""
+    if not rows:
+        return b""
+    lines = [json.dumps(row, ensure_ascii=False) for row in rows]
+    return ("\n".join(lines) + "\n").encode("utf-8")
+
+
 def write_ndjson(rows: list[dict], path: Path) -> None:
     """行のリストを NDJSON ファイルに書き出す。"""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as f:
-        for row in rows:
-            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+    path.write_bytes(rows_to_ndjson_bytes(rows))
     logger.info("保存: %s (%d 行)", path, len(rows))
 
 
@@ -900,12 +918,10 @@ def main() -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
-    random.seed(42)
-
     output_dir = RAW_DATA_DIR
     remove_legacy_public_raw_files()
 
-    org_rows, user_rows = generate_mock_data()
+    org_rows, user_rows = generate_mock_bundle(seed=42)
     write_ndjson(org_rows, output_dir / "org_metrics.ndjson")
     write_ndjson(user_rows, output_dir / "user_metrics.ndjson")
 

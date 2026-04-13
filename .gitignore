@@ -13,6 +13,7 @@ dashboard/dist/
 
 # uv
 .python-version
+requirements.txt
 
 # 環境変数
 .env

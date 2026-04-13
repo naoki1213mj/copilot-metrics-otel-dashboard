@@ -14,6 +14,7 @@ import { AgentAdoptionOverview } from './components/AgentAdoptionOverview';
 import { CloudAgentActivityChart } from './components/CloudAgentActivityChart';
 import { ReviewEngagement } from './components/ReviewEngagement';
 import { LanguageUsageChart } from './components/LanguageUsageChart';
+import { loadDashboardData } from './dataLoader';
 import {
   formatDateLabel,
   formatDateRange,
@@ -160,29 +161,16 @@ function App() {
   useEffect(() => {
     let cancelled = false;
 
-    Promise.all([
-      fetch('/data/daily_summary.json').then((res) => {
-        if (!res.ok) throw new Error(`daily_summary.json: ${res.status}`);
-        return res.json() as Promise<DailySummary[]>;
-      }),
-      fetch('/data/language_summary.json').then((res) => {
-        if (!res.ok) throw new Error(`language_summary.json: ${res.status}`);
-        return res.json() as Promise<LanguageSummary[]>;
-      }),
-      fetch('/data/user_daily_summary.json').then((res) => {
-        if (!res.ok) throw new Error(`user_daily_summary.json: ${res.status}`);
-        return res.json() as Promise<UserDailySummary[]>;
-      }),
-    ])
-      .then(([dailyData, languageData, userDailyData]) => {
+    loadDashboardData()
+      .then(({ daily, languageSummary, userDaily }) => {
         if (cancelled) {
           return;
         }
 
-        setDaily(dailyData);
-        setLanguageSummary(languageData);
-        setUserDaily(userDailyData);
-        setSelectedWindowDays(resolveDefaultWindow(dailyData.length));
+        setDaily(daily);
+        setLanguageSummary(languageSummary);
+        setUserDaily(userDaily);
+        setSelectedWindowDays(resolveDefaultWindow(daily.length));
       })
       .catch((err: unknown) => {
         if (cancelled) {
@@ -211,15 +199,16 @@ function App() {
     () => getAvailableRangeOptions(sortedDaily.length),
     [sortedDaily.length],
   );
-
-  useEffect(() => {
+  const resolvedWindowDays = useMemo(() => {
     if (sortedDaily.length === 0) {
-      return;
+      return DEFAULT_WINDOW_DAYS;
     }
 
-    if (!availableRangeOptions.includes(selectedWindowDays)) {
-      setSelectedWindowDays(resolveDefaultWindow(sortedDaily.length));
+    if (availableRangeOptions.includes(selectedWindowDays)) {
+      return selectedWindowDays;
     }
+
+    return resolveDefaultWindow(sortedDaily.length);
   }, [availableRangeOptions, selectedWindowDays, sortedDaily.length]);
 
   const visibleDaily = useMemo(() => {
@@ -227,8 +216,8 @@ function App() {
       return [];
     }
 
-    return sortedDaily.slice(-Math.min(selectedWindowDays, sortedDaily.length));
-  }, [selectedWindowDays, sortedDaily]);
+    return sortedDaily.slice(-Math.min(resolvedWindowDays, sortedDaily.length));
+  }, [resolvedWindowDays, sortedDaily]);
   const visibleDaySet = useMemo(
     () => new Set(visibleDaily.map((row) => row.day)),
     [visibleDaily],
@@ -578,7 +567,7 @@ function App() {
                     key={option}
                     type="button"
                     className={`range-toggle-button${
-                      selectedWindowDays === option ? ' range-toggle-button--active' : ''
+                      resolvedWindowDays === option ? ' range-toggle-button--active' : ''
                     }`}
                     onClick={() => setSelectedWindowDays(option)}
                   >

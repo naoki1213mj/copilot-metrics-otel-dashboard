@@ -4,6 +4,8 @@ Organization の daily report を直近 100 日分取得し、
 非公開ディレクトリ data/raw/ に NDJSON ファイルとして出力する。
 """
 
+from collections.abc import Sequence
+from dataclasses import dataclass
 import io
 import json
 import logging
@@ -29,6 +31,15 @@ LEGACY_PUBLIC_RAW_FILES = (
     Path("dashboard") / "public" / "data" / "org_metrics.json",
     Path("dashboard") / "public" / "data" / "user_metrics.json",
 )
+_TELEMETRY_CONFIGURED = False
+
+
+@dataclass(slots=True)
+class RawMetricsBundle:
+    """取得した raw メトリクスの DataFrame をまとめる。"""
+
+    org_metrics: pl.DataFrame
+    user_metrics: pl.DataFrame
 
 
 def setup_telemetry(api_client: httpx.Client) -> None:
@@ -46,7 +57,10 @@ def setup_telemetry(api_client: httpx.Client) -> None:
     from azure.monitor.opentelemetry import configure_azure_monitor
     from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
-    configure_azure_monitor(connection_string=conn_str)
+    global _TELEMETRY_CONFIGURED
+    if not _TELEMETRY_CONFIGURED:
+        configure_azure_monitor(connection_string=conn_str)
+        _TELEMETRY_CONFIGURED = True
     HTTPXClientInstrumentor().instrument_client(api_client)
     logger.info("OTel + Application Insights を有効化しました（GitHub API クライアントのみ）。")
 
@@ -88,8 +102,13 @@ def fetch_report(
         return pl.DataFrame()
     resp.raise_for_status()
     data = resp.json()
+    if not isinstance(data, dict):
+        raise ValueError(f"download_links を含む JSON ではありません: {path}")
 
-    links: list[str] = data.get("download_links", [])
+    links_raw = data.get("download_links", [])
+    if not isinstance(links_raw, list):
+        raise ValueError(f"download_links の形式が不正です: {path}")
+    links = [str(link) for link in links_raw]
     if not links:
         logger.warning("download_links が空です: %s", path)
         return pl.DataFrame()
@@ -118,24 +137,30 @@ def concat_data_frames(frames: list[pl.DataFrame]) -> pl.DataFrame:
     return pl.concat(frames, how="diagonal")
 
 
-def get_report_window_days() -> int:
-    """取得する日数を環境変数から決定する。"""
-    raw_value = os.getenv("COPILOT_METRICS_DAYS", str(DEFAULT_REPORT_DAYS))
+def parse_report_window_days(raw_value: str | None) -> int:
+    """取得する日数を検証して返す。"""
+    parsed_value = raw_value or str(DEFAULT_REPORT_DAYS)
     try:
-        window_days = int(raw_value)
-    except ValueError:
-        logger.error("COPILOT_METRICS_DAYS は整数で指定してください: %s", raw_value)
-        sys.exit(1)
+        window_days = int(parsed_value)
+    except ValueError as exc:
+        raise ValueError(
+            f"COPILOT_METRICS_DAYS は整数で指定してください: {parsed_value}"
+        ) from exc
 
     if not 1 <= window_days <= MAX_REPORT_DAYS:
-        logger.error(
-            "COPILOT_METRICS_DAYS は 1〜%d の範囲で指定してください: %d",
-            MAX_REPORT_DAYS,
-            window_days,
+        raise ValueError(
+            f"COPILOT_METRICS_DAYS は 1〜{MAX_REPORT_DAYS} の範囲で指定してください: {window_days}"
         )
-        sys.exit(1)
-
     return window_days
+
+
+def get_report_window_days() -> int:
+    """取得する日数を環境変数から決定する。"""
+    try:
+        return parse_report_window_days(os.getenv("COPILOT_METRICS_DAYS"))
+    except ValueError as exc:
+        logger.error("%s", exc)
+        sys.exit(1)
 
 
 def generate_report_days(window_days: int) -> list[date]:
@@ -148,7 +173,7 @@ def fetch_daily_reports(
     api_client: httpx.Client,
     download_client: httpx.Client,
     path_template: str,
-    report_days: list[date],
+    report_days: Sequence[date],
 ) -> pl.DataFrame:
     """特定日の daily report を複数日ぶん取得して結合する。"""
     frames: list[pl.DataFrame] = []
@@ -160,14 +185,70 @@ def fetch_daily_reports(
     return concat_data_frames(frames)
 
 
+def fetch_metrics_bundle(
+    token: str,
+    org: str,
+    report_days: Sequence[date],
+) -> RawMetricsBundle:
+    """Organization / User の daily report をまとめて取得する。"""
+    with build_api_client(token) as api_client, build_download_client() as download_client:
+        setup_telemetry(api_client)
+        logger.info("Organization daily reports を %d 日分取得します。", len(report_days))
+        org_metrics = fetch_daily_reports(
+            api_client,
+            download_client,
+            f"/orgs/{org}/copilot/metrics/reports/organization-1-day?day={{day}}",
+            report_days,
+        )
+        user_metrics = fetch_daily_reports(
+            api_client,
+            download_client,
+            f"/orgs/{org}/copilot/metrics/reports/users-1-day?day={{day}}",
+            report_days,
+        )
+    return RawMetricsBundle(org_metrics=org_metrics, user_metrics=user_metrics)
+
+
+def dataframe_to_ndjson_bytes(df: pl.DataFrame) -> bytes:
+    """DataFrame を NDJSON バイト列に変換する。"""
+    if len(df) == 0:
+        return b""
+    lines = [json.dumps(row, ensure_ascii=False) for row in df.to_dicts()]
+    return ("\n".join(lines) + "\n").encode("utf-8")
+
+
 def save_ndjson(df: pl.DataFrame, output_path: Path) -> None:
     """DataFrame を NDJSON ファイルに保存する。"""
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", encoding="utf-8") as file:
-        for row in df.to_dicts():
-            file.write(json.dumps(row, ensure_ascii=False))
-            file.write("\n")
+    output_path.write_bytes(dataframe_to_ndjson_bytes(df))
     logger.info("保存: %s (%d 行)", output_path, len(df))
+
+
+def write_raw_metrics_bundle(
+    bundle: RawMetricsBundle,
+    output_dir: Path = RAW_DATA_DIR,
+    *,
+    remove_legacy_public_raw: bool = True,
+) -> dict[str, Path]:
+    """raw メトリクスをローカルファイルへ書き出す。"""
+    if remove_legacy_public_raw:
+        remove_legacy_public_raw_files()
+    output_paths = {
+        "org_metrics": output_dir / "org_metrics.ndjson",
+        "user_metrics": output_dir / "user_metrics.ndjson",
+    }
+    save_ndjson(bundle.org_metrics, output_paths["org_metrics"])
+    save_ndjson(bundle.user_metrics, output_paths["user_metrics"])
+    return output_paths
+
+
+def get_github_configuration_from_env() -> tuple[str, str]:
+    """GitHub API 呼び出しに必要な設定を環境変数から取得する。"""
+    token = os.getenv("GITHUB_TOKEN")
+    org = os.getenv("GITHUB_ORG")
+    if not token or not org:
+        raise ValueError("GITHUB_TOKEN と GITHUB_ORG を .env に設定してください。")
+    return token, org
 
 
 def remove_legacy_public_raw_files() -> None:
@@ -191,36 +272,15 @@ def main() -> None:
     )
 
     load_dotenv()
-    token = os.getenv("GITHUB_TOKEN")
-    org = os.getenv("GITHUB_ORG")
-    if not token or not org:
-        logger.error("GITHUB_TOKEN と GITHUB_ORG を .env に設定してください。")
+    try:
+        token, org = get_github_configuration_from_env()
+        report_days = generate_report_days(get_report_window_days())
+        bundle = fetch_metrics_bundle(token, org, report_days)
+    except ValueError as exc:
+        logger.error("%s", exc)
         sys.exit(1)
 
-    output_dir = RAW_DATA_DIR
-    report_days = generate_report_days(get_report_window_days())
-
-    with build_api_client(token) as api_client, build_download_client() as dl_client:
-        setup_telemetry(api_client)
-        remove_legacy_public_raw_files()
-
-        logger.info("Organization daily reports を %d 日分取得します。", len(report_days))
-
-        org_df = fetch_daily_reports(
-            api_client,
-            dl_client,
-            f"/orgs/{org}/copilot/metrics/reports/organization-1-day?day={{day}}",
-            report_days,
-        )
-        save_ndjson(org_df, output_dir / "org_metrics.ndjson")
-
-        user_df = fetch_daily_reports(
-            api_client,
-            dl_client,
-            f"/orgs/{org}/copilot/metrics/reports/users-1-day?day={{day}}",
-            report_days,
-        )
-        save_ndjson(user_df, output_dir / "user_metrics.ndjson")
+    write_raw_metrics_bundle(bundle, RAW_DATA_DIR)
 
 
 if __name__ == "__main__":

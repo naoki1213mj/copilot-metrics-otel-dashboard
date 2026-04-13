@@ -13,17 +13,22 @@ import polars as pl
 import pytest
 
 from src.fetch_metrics import (
+    RawMetricsBundle,
     build_api_client,
     build_download_client,
     concat_data_frames,
+    dataframe_to_ndjson_bytes,
     download_ndjson,
     fetch_daily_reports,
+    fetch_metrics_bundle,
     fetch_report,
     generate_report_days,
     get_report_window_days,
     main,
+    parse_report_window_days,
     save_ndjson,
     setup_telemetry,
+    write_raw_metrics_bundle,
 )
 
 
@@ -176,6 +181,9 @@ class TestGenerateReportDays:
 
 
 class TestGetReportWindowDays:
+    def test_parse_helper_reads_default(self) -> None:
+        assert parse_report_window_days(None) == 100
+
     def test_defaults_to_100(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("COPILOT_METRICS_DAYS", raising=False)
         assert get_report_window_days() == 100
@@ -189,6 +197,48 @@ class TestGetReportWindowDays:
         with pytest.raises(SystemExit) as exc_info:
             get_report_window_days()
         assert exc_info.value.code == 1
+
+
+class TestDataFrameToNdjsonBytes:
+    def test_serializes_rows(self) -> None:
+        df = pl.DataFrame({"id": [1, 2], "name": ["alice", "bob"]})
+        content = dataframe_to_ndjson_bytes(df).decode("utf-8").splitlines()
+
+        assert [json.loads(line)["name"] for line in content] == ["alice", "bob"]
+
+
+class TestFetchMetricsBundle:
+    def test_fetches_org_and_user_reports(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        expected_org_df = pl.DataFrame({"day": ["2025-01-01"], "value": [1]})
+        expected_user_df = pl.DataFrame(
+            {"day": ["2025-01-01"], "user_login": ["alice"]}
+        )
+
+        monkeypatch.setattr(
+            "src.fetch_metrics.build_api_client",
+            lambda token: httpx.Client(),
+        )
+        monkeypatch.setattr(
+            "src.fetch_metrics.build_download_client",
+            lambda: httpx.Client(),
+        )
+        monkeypatch.setattr("src.fetch_metrics.setup_telemetry", lambda client: None)
+        monkeypatch.setattr(
+            "src.fetch_metrics.fetch_daily_reports",
+            MagicMock(side_effect=[expected_org_df, expected_user_df]),
+        )
+
+        bundle = fetch_metrics_bundle(
+            "token123",
+            "octo-org",
+            [date(2025, 1, 1)],
+        )
+
+        assert bundle.org_metrics.to_dicts() == expected_org_df.to_dicts()
+        assert bundle.user_metrics.to_dicts() == expected_user_df.to_dicts()
 
 
 class TestFetchDailyReports:
@@ -242,6 +292,28 @@ class TestSaveNdjson:
         first = json.loads(lines[0])
         assert first["name"] == "alice"
         assert first["score"] == 10
+
+
+class TestWriteRawMetricsBundle:
+    def test_writes_both_raw_files(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        bundle = RawMetricsBundle(
+            org_metrics=pl.DataFrame({"day": ["2025-01-01"]}),
+            user_metrics=pl.DataFrame(
+                {"day": ["2025-01-01"], "user_login": ["alice"]}
+            ),
+        )
+
+        output_paths = write_raw_metrics_bundle(
+            bundle,
+            tmp_path,
+            remove_legacy_public_raw=False,
+        )
+
+        assert output_paths["org_metrics"].exists()
+        assert output_paths["user_metrics"].exists()
 
 
 # ---------- setup_telemetry ----------

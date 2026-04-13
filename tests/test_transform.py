@@ -6,16 +6,20 @@ import polars as pl
 import pytest
 
 from src.transform import (
+    DashboardSnapshotBundle,
     LANGUAGE_METRIC_COLUMNS,
     METRIC_COLUMNS,
     ORG_DAILY_METRIC_COLUMNS,
     USER_FLAG_COLUMNS,
+    build_dashboard_snapshot_bundle,
     ensure_columns,
     main,
+    serialize_json_bytes,
     transform_daily_summary,
     transform_language_summary,
     transform_user_daily_summary,
     transform_user_summary,
+    write_dashboard_snapshot_bundle,
 )
 
 
@@ -107,6 +111,11 @@ def test_transform_daily_summary_has_correct_keys():
     result = transform_daily_summary(df)
     expected_keys = {"day", *METRIC_COLUMNS, *ORG_DAILY_METRIC_COLUMNS}
     assert set(result[0].keys()) == expected_keys
+
+
+def test_transform_daily_summary_returns_empty_without_day():
+    """day カラムが無い場合は空配列で返す。"""
+    assert transform_daily_summary(pl.DataFrame({"value": [1]})) == []
 
 
 def test_transform_daily_summary_fills_missing_official_metrics():
@@ -277,6 +286,11 @@ def test_transform_user_summary_sorted_by_interactions():
     assert logins == ["high", "mid", "low"]
 
 
+def test_transform_user_summary_returns_empty_without_user_login():
+    """user_login が無い場合は空配列で返す。"""
+    assert transform_user_summary(pl.DataFrame({"day": ["2025-01-01"]})) == []
+
+
 def test_transform_user_daily_summary_removes_user_id_and_sorts():
     """日次ユーザーデータは user_id を除外し、day / user_login で並ぶこと。"""
     df = _make_user_df(
@@ -301,6 +315,57 @@ def test_transform_user_daily_summary_removes_user_id_and_sorts():
     assert [row["user_login"] for row in result] == ["alice", "bob"]
     assert all("user_id" not in row for row in result)
     assert "used_copilot_coding_agent" in result[0]
+
+
+def test_build_dashboard_snapshot_bundle_contains_all_sections():
+    """bundle 化したスナップショットに各セクションが揃うこと。"""
+    org_df = _make_org_df([{"day": "2025-01-01", "total_active_users": 1}])
+    user_df = _make_user_df(
+        [
+            {
+                "day": "2025-01-01",
+                "user_login": "alice",
+                "user_initiated_interaction_count": 2,
+            }
+        ]
+    )
+
+    bundle = build_dashboard_snapshot_bundle(org_df, user_df)
+
+    assert isinstance(bundle, DashboardSnapshotBundle)
+    assert len(bundle.daily_summary) == 1
+    assert len(bundle.user_summary) == 1
+    assert len(bundle.user_daily_summary) == 1
+    assert bundle.language_summary == []
+
+
+def test_write_dashboard_snapshot_bundle_creates_files(tmp_path):
+    """スナップショット bundle を JSON ファイルとして保存できること。"""
+    bundle = DashboardSnapshotBundle(
+        daily_summary=[{"day": "2025-01-01"}],
+        user_summary=[{"user_login": "alice"}],
+        user_daily_summary=[{"day": "2025-01-01", "user_login": "alice"}],
+        language_summary=[{"day": "2025-01-01", "language": "python"}],
+    )
+
+    output_paths = write_dashboard_snapshot_bundle(bundle, tmp_path)
+
+    assert set(output_paths) == {
+        "daily_summary",
+        "user_summary",
+        "user_daily_summary",
+        "language_summary",
+    }
+    for path in output_paths.values():
+        assert path.exists()
+
+
+def test_serialize_json_bytes_preserves_unicode():
+    """JSON バイト列化しても日本語が保持されること。"""
+    payload = [{"message": "こんにちは"}]
+    content = serialize_json_bytes(payload)
+
+    assert json.loads(content.decode("utf-8")) == payload
 
 
 # ---------------------------------------------------------------------------

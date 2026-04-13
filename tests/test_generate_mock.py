@@ -16,10 +16,12 @@ from src.generate_mock import (
     USER_FLAG_FIELDS,
     USER_METRIC_FIELDS,
     generate_dates,
+    generate_mock_bundle,
     generate_mock_data,
     generate_org_row,
     generate_user_row,
     main,
+    rows_to_ndjson_bytes,
     write_ndjson,
 )
 
@@ -235,6 +237,12 @@ class TestGenerateMockData:
 
 
 class TestWriteNdjson:
+    def test_rows_to_ndjson_bytes_preserves_rows(self) -> None:
+        rows = [{"a": 1}, {"b": "two"}]
+        content = rows_to_ndjson_bytes(rows).decode("utf-8").splitlines()
+
+        assert [json.loads(line) for line in content] == rows
+
     def test_creates_valid_file(self, tmp_path: Path) -> None:
         rows = [{"a": 1}, {"b": 2}, {"c": 3}]
         out = tmp_path / "test.ndjson"
@@ -271,6 +279,13 @@ class TestMain:
 
 
 class TestSeedDeterminism:
+    def test_bundle_helper_applies_seed(self) -> None:
+        """bundle helper でもシード固定時は同一結果になる。"""
+        run1 = generate_mock_bundle(seed=99)
+        run2 = generate_mock_bundle(seed=99)
+
+        assert run1 == run2
+
     def test_same_seed_same_output(self) -> None:
         """同じシードで 2 回実行すると同一の結果になる。"""
         random.seed(99)

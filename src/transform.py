@@ -11,6 +11,7 @@
   - dashboard/public/data/language_summary.json (言語別の日次 breakdown)
 """
 
+from dataclasses import dataclass
 import io
 import json
 import logging
@@ -60,6 +61,16 @@ LANGUAGE_METRIC_COLUMNS = [
 ]
 
 
+@dataclass(slots=True)
+class DashboardSnapshotBundle:
+    """UI 向けに整形したスナップショット一式。"""
+
+    daily_summary: list[dict[str, object]]
+    user_summary: list[dict[str, object]]
+    user_daily_summary: list[dict[str, object]]
+    language_summary: list[dict[str, object]]
+
+
 def read_ndjson(path: Path) -> pl.DataFrame:
     """NDJSON ファイルを DataFrame として読み込む。"""
     content = path.read_bytes()
@@ -82,6 +93,8 @@ def ensure_columns(df: pl.DataFrame, defaults: dict[str, object]) -> pl.DataFram
 
 def transform_daily_summary(df: pl.DataFrame) -> list[dict[str, object]]:
     """Organization NDJSON を日付昇順の日次サマリーに変換する。"""
+    if "day" not in df.columns:
+        return []
     df = ensure_columns(
         df,
         {
@@ -99,6 +112,8 @@ def transform_user_summary(df: pl.DataFrame) -> list[dict[str, object]]:
     total_active_users はユーザーレベルでは常に 1 なので、
     アクティブだった日数（= 行数）を active_days として集計する。
     """
+    if "user_login" not in df.columns:
+        return []
     df = ensure_columns(
         df,
         {
@@ -124,6 +139,8 @@ def transform_user_summary(df: pl.DataFrame) -> list[dict[str, object]]:
 
 def transform_user_daily_summary(df: pl.DataFrame) -> list[dict[str, object]]:
     """user_id を除いたユーザー日次データを UI 向けに整形する。"""
+    if "day" not in df.columns or "user_login" not in df.columns:
+        return []
     df = ensure_columns(
         df,
         {
@@ -140,7 +157,7 @@ def transform_user_daily_summary(df: pl.DataFrame) -> list[dict[str, object]]:
 
 def transform_language_summary(df: pl.DataFrame) -> list[dict[str, object]]:
     """Organization の language breakdown を UI 向けに平坦化する。"""
-    if "totals_by_language_feature" not in df.columns:
+    if "totals_by_language_feature" not in df.columns or "day" not in df.columns:
         return []
 
     language_rows: list[dict[str, object]] = []
@@ -188,14 +205,48 @@ def transform_language_summary(df: pl.DataFrame) -> list[dict[str, object]]:
     return aggregated.to_dicts()
 
 
+def build_dashboard_snapshot_bundle(
+    org_df: pl.DataFrame,
+    user_df: pl.DataFrame,
+) -> DashboardSnapshotBundle:
+    """raw メトリクスの DataFrame から UI 用スナップショットを作る。"""
+    return DashboardSnapshotBundle(
+        daily_summary=transform_daily_summary(org_df),
+        user_summary=transform_user_summary(user_df),
+        user_daily_summary=transform_user_daily_summary(user_df),
+        language_summary=transform_language_summary(org_df),
+    )
+
+
+def serialize_json_bytes(data: list[dict[str, object]]) -> bytes:
+    """JSON データを UTF-8 バイト列に変換する。"""
+    return json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
+
+
 def save_json(data: list[dict[str, object]], path: Path) -> None:
     """JSON ファイルに保存する。"""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(data, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+    path.write_bytes(serialize_json_bytes(data))
     logger.info("保存: %s (%d 件)", path, len(data))
+
+
+def write_dashboard_snapshot_bundle(
+    bundle: DashboardSnapshotBundle,
+    output_dir: Path = PUBLIC_DATA_DIR,
+) -> dict[str, Path]:
+    """UI 用スナップショット一式をローカルファイルへ保存する。"""
+    output_paths = {
+        "daily_summary": output_dir / "daily_summary.json",
+        "user_summary": output_dir / "user_summary.json",
+        "user_daily_summary": output_dir / "user_daily_summary.json",
+        "language_summary": output_dir / "language_summary.json",
+    }
+    save_json(bundle.daily_summary, output_paths["daily_summary"])
+    save_json(bundle.user_summary, output_paths["user_summary"])
+    save_json(bundle.user_daily_summary, output_paths["user_daily_summary"])
+    save_json(bundle.language_summary, output_paths["language_summary"])
+    remove_legacy_public_raw_files()
+    return output_paths
 
 
 def remove_legacy_public_raw_files() -> None:
@@ -223,21 +274,16 @@ def main() -> None:
     missing_inputs = [path for path in (org_ndjson, user_ndjson) if not path.exists()]
     if missing_inputs:
         for path in missing_inputs:
-            logger.error("%s が見つかりません。先に generate_mock.py か fetch_metrics.py を実行してください。", path)
+            logger.error(
+                "%s が見つかりません。先に generate_mock.py か fetch_metrics.py を実行してください。",
+                path,
+            )
         sys.exit(1)
 
     org_df = read_ndjson(org_ndjson)
-    daily = transform_daily_summary(org_df)
-    save_json(daily, PUBLIC_DATA_DIR / "daily_summary.json")
-    language_summary = transform_language_summary(org_df)
-    save_json(language_summary, PUBLIC_DATA_DIR / "language_summary.json")
-
     user_df = read_ndjson(user_ndjson)
-    users = transform_user_summary(user_df)
-    save_json(users, PUBLIC_DATA_DIR / "user_summary.json")
-    user_daily = transform_user_daily_summary(user_df)
-    save_json(user_daily, PUBLIC_DATA_DIR / "user_daily_summary.json")
-    remove_legacy_public_raw_files()
+    bundle = build_dashboard_snapshot_bundle(org_df, user_df)
+    write_dashboard_snapshot_bundle(bundle, PUBLIC_DATA_DIR)
 
 
 if __name__ == "__main__":
