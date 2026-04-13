@@ -1,19 +1,21 @@
 import React from 'react';
 import {
-  AreaChart,
   Area,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
   ResponsiveContainer,
+  ComposedChart,
 } from 'recharts';
 import type { DailySummary } from '../types';
 
 // Props
 interface CodeActivityChartProps {
   data: DailySummary[];
+  height?: number;
 }
 
 // 日付を MM-DD 形式にフォーマットする
@@ -29,20 +31,43 @@ const formatDate = (dateString: string): string => {
 };
 
 // コード生成量・承認数・Agent 変更量の推移チャート
-export const CodeActivityChart: React.FC<CodeActivityChartProps> = ({ data }) => {
+export const CodeActivityChart: React.FC<CodeActivityChartProps> = ({ data, height = 300 }) => {
+  const chartData = data.map((row) => ({
+    ...row,
+    acceptance_rate:
+      row.code_generation_activity_count > 0
+        ? (row.code_acceptance_activity_count / row.code_generation_activity_count) * 100
+        : 0,
+  }));
+
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+    <ResponsiveContainer width="100%" height={height}>
+      <ComposedChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           dataKey="day"
           tickFormatter={formatDate}
+          interval="preserveStartEnd"
+          minTickGap={28}
           tick={{ fontSize: 12 }}
         />
-        <YAxis tick={{ fontSize: 12 }} />
+        <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
+        <YAxis
+          yAxisId="right"
+          orientation="right"
+          domain={[0, 100]}
+          tickFormatter={(value) => `${value}%`}
+          tick={{ fontSize: 12 }}
+        />
         <Tooltip
-          formatter={(value) => {
+          formatter={(value, name) => {
             if (typeof value === 'number') {
+              if (name === 'acceptance_rate') {
+                return `${value.toLocaleString('ja-JP', {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })}%`;
+              }
               return value.toLocaleString('ja-JP');
             }
             return String(value ?? '');
@@ -52,6 +77,7 @@ export const CodeActivityChart: React.FC<CodeActivityChartProps> = ({ data }) =>
         <Legend wrapperStyle={{ paddingTop: '10px' }} />
         {/* コード生成数 */}
         <Area
+          yAxisId="left"
           type="monotone"
           dataKey="code_generation_activity_count"
           stroke="#8b5cf6"
@@ -62,6 +88,7 @@ export const CodeActivityChart: React.FC<CodeActivityChartProps> = ({ data }) =>
         />
         {/* 承認数 */}
         <Area
+          yAxisId="left"
           type="monotone"
           dataKey="code_acceptance_activity_count"
           stroke="#10b981"
@@ -72,6 +99,7 @@ export const CodeActivityChart: React.FC<CodeActivityChartProps> = ({ data }) =>
         />
         {/* Agent によるコード変更 */}
         <Area
+          yAxisId="left"
           type="monotone"
           dataKey="agent_edit"
           stroke="#f97316"
@@ -80,7 +108,16 @@ export const CodeActivityChart: React.FC<CodeActivityChartProps> = ({ data }) =>
           strokeWidth={2}
           name="Agent コード変更"
         />
-      </AreaChart>
+        <Line
+          yAxisId="right"
+          type="monotone"
+          dataKey="acceptance_rate"
+          stroke="#0f172a"
+          strokeWidth={2}
+          dot={{ r: 3 }}
+          name="承認率"
+        />
+      </ComposedChart>
     </ResponsiveContainer>
   );
 };

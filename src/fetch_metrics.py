@@ -1,6 +1,6 @@
 """GitHub Copilot usage metrics API から raw NDJSON を取得する。
 
-Organization レベルの 28 日レポート（組織全体・ユーザー別）を取得し、
+Organization の daily report を直近 100 日分取得し、
 非公開ディレクトリ data/raw/ に NDJSON ファイルとして出力する。
 """
 
@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import sys
+from datetime import date, timedelta
 from pathlib import Path
 
 import httpx
@@ -20,6 +21,8 @@ logger = logging.getLogger(__name__)
 API_VERSION = "2026-03-10"
 BASE_URL = "https://api.github.com"
 RAW_DATA_DIR = Path("data") / "raw"
+DEFAULT_REPORT_DAYS = 100
+MAX_REPORT_DAYS = 100
 LEGACY_PUBLIC_RAW_FILES = (
     Path("dashboard") / "public" / "data" / "org_metrics.ndjson",
     Path("dashboard") / "public" / "data" / "user_metrics.ndjson",
@@ -58,7 +61,7 @@ def build_api_client(token: str) -> httpx.Client:
         base_url=BASE_URL,
         headers={
             "Authorization": f"Bearer {token}",
-            "Accept": "application/json",
+            "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": API_VERSION,
         },
         timeout=30,
@@ -80,6 +83,9 @@ def fetch_report(
 ) -> pl.DataFrame:
     """レポートエンドポイントを呼び出し、NDJSON をダウンロードして DataFrame にする。"""
     resp = api_client.get(path)
+    if resp.status_code == httpx.codes.NO_CONTENT:
+        logger.info("データなしのためスキップ: %s", path)
+        return pl.DataFrame()
     resp.raise_for_status()
     data = resp.json()
 
@@ -100,7 +106,58 @@ def download_ndjson(client: httpx.Client, links: list[str]) -> pl.DataFrame:
         resp.raise_for_status()
         df = pl.read_ndjson(io.BytesIO(resp.content))
         frames.append(df)
-    return pl.concat(frames) if frames else pl.DataFrame()
+    return concat_data_frames(frames)
+
+
+def concat_data_frames(frames: list[pl.DataFrame]) -> pl.DataFrame:
+    """スキーマ差分を許容しつつ DataFrame を結合する。"""
+    if not frames:
+        return pl.DataFrame()
+    if len(frames) == 1:
+        return frames[0]
+    return pl.concat(frames, how="diagonal")
+
+
+def get_report_window_days() -> int:
+    """取得する日数を環境変数から決定する。"""
+    raw_value = os.getenv("COPILOT_METRICS_DAYS", str(DEFAULT_REPORT_DAYS))
+    try:
+        window_days = int(raw_value)
+    except ValueError:
+        logger.error("COPILOT_METRICS_DAYS は整数で指定してください: %s", raw_value)
+        sys.exit(1)
+
+    if not 1 <= window_days <= MAX_REPORT_DAYS:
+        logger.error(
+            "COPILOT_METRICS_DAYS は 1〜%d の範囲で指定してください: %d",
+            MAX_REPORT_DAYS,
+            window_days,
+        )
+        sys.exit(1)
+
+    return window_days
+
+
+def generate_report_days(window_days: int) -> list[date]:
+    """直近 N 日分の report_day 一覧を古い順で返す。"""
+    end = date.today() - timedelta(days=2)
+    return [end - timedelta(days=i) for i in range(window_days - 1, -1, -1)]
+
+
+def fetch_daily_reports(
+    api_client: httpx.Client,
+    download_client: httpx.Client,
+    path_template: str,
+    report_days: list[date],
+) -> pl.DataFrame:
+    """特定日の daily report を複数日ぶん取得して結合する。"""
+    frames: list[pl.DataFrame] = []
+    for report_day in report_days:
+        path = path_template.format(day=report_day.isoformat())
+        df = fetch_report(api_client, download_client, path)
+        if len(df) > 0:
+            frames.append(df)
+    return concat_data_frames(frames)
 
 
 def save_ndjson(df: pl.DataFrame, output_path: Path) -> None:
@@ -141,24 +198,27 @@ def main() -> None:
         sys.exit(1)
 
     output_dir = RAW_DATA_DIR
+    report_days = generate_report_days(get_report_window_days())
 
     with build_api_client(token) as api_client, build_download_client() as dl_client:
         setup_telemetry(api_client)
         remove_legacy_public_raw_files()
 
-        # Organization 28 日レポート
-        org_df = fetch_report(
+        logger.info("Organization daily reports を %d 日分取得します。", len(report_days))
+
+        org_df = fetch_daily_reports(
             api_client,
             dl_client,
-            f"/orgs/{org}/copilot/metrics/reports/organization-28-day/latest",
+            f"/orgs/{org}/copilot/metrics/reports/organization-1-day?day={{day}}",
+            report_days,
         )
         save_ndjson(org_df, output_dir / "org_metrics.ndjson")
 
-        # ユーザー 28 日レポート
-        user_df = fetch_report(
+        user_df = fetch_daily_reports(
             api_client,
             dl_client,
-            f"/orgs/{org}/copilot/metrics/reports/users-28-day/latest",
+            f"/orgs/{org}/copilot/metrics/reports/users-1-day?day={{day}}",
+            report_days,
         )
         save_ndjson(user_df, output_dir / "user_metrics.ndjson")
 

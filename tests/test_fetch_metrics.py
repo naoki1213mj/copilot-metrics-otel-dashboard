@@ -4,19 +4,23 @@
 """
 
 import json
+from datetime import date, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import httpx
+import polars as pl
 import pytest
-
-pl = pytest.importorskip("polars")
 
 from src.fetch_metrics import (
     build_api_client,
     build_download_client,
+    concat_data_frames,
     download_ndjson,
+    fetch_daily_reports,
     fetch_report,
+    generate_report_days,
+    get_report_window_days,
     main,
     save_ndjson,
     setup_telemetry,
@@ -61,7 +65,7 @@ class TestBuildApiClient:
         client = build_api_client("token123")
         h = client.headers
         assert h["authorization"] == "Bearer token123"
-        assert h["accept"] == "application/json"
+        assert h["accept"] == "application/vnd.github+json"
         assert h["x-github-api-version"] == "2026-03-10"
         client.close()
 
@@ -95,11 +99,30 @@ class TestFetchReport:
         dl_client = MagicMock(spec=httpx.Client)
         dl_client.get.return_value = _mock_httpx_response(content=ndjson_bytes)
 
-        df = fetch_report(api_client, dl_client, "/orgs/test/copilot/metrics/reports/organization-28-day/latest")
+        df = fetch_report(
+            api_client,
+            dl_client,
+            "/orgs/test/copilot/metrics/reports/organization-1-day?day=2025-01-01",
+        )
 
         assert len(df) == 1
         assert df["day"][0] == "2025-01-01"
         assert df["total_acceptances_count"][0] == 42
+
+    def test_no_content_returns_empty_df(self) -> None:
+        """daily report が 204 の場合は空 DataFrame を返す。"""
+        api_client = MagicMock(spec=httpx.Client)
+        api_client.get.return_value = _mock_httpx_response(status_code=204)
+        dl_client = MagicMock(spec=httpx.Client)
+
+        df = fetch_report(
+            api_client,
+            dl_client,
+            "/orgs/test/copilot/metrics/reports/organization-1-day?day=2025-01-01",
+        )
+
+        assert len(df) == 0
+        dl_client.get.assert_not_called()
 
     def test_empty_links_returns_empty_df(self, caplog: pytest.LogCaptureFixture) -> None:
         """download_links が空の場合、空 DataFrame を返し warning を出す。"""
@@ -136,6 +159,66 @@ class TestDownloadNdjson:
         assert len(df) == 2
         assert df["id"].to_list() == [1, 2]
         assert df["val"].to_list() == ["a", "b"]
+
+
+class TestConcatDataFrames:
+    def test_returns_empty_df_for_no_frames(self) -> None:
+        df = concat_data_frames([])
+        assert len(df) == 0
+
+
+class TestGenerateReportDays:
+    def test_returns_requested_days_in_ascending_order(self) -> None:
+        report_days = generate_report_days(5)
+        assert len(report_days) == 5
+        assert report_days == sorted(report_days)
+        assert report_days[-1] == date.today() - timedelta(days=2)
+
+
+class TestGetReportWindowDays:
+    def test_defaults_to_100(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("COPILOT_METRICS_DAYS", raising=False)
+        assert get_report_window_days() == 100
+
+    def test_reads_env_value(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("COPILOT_METRICS_DAYS", "30")
+        assert get_report_window_days() == 30
+
+    def test_rejects_invalid_value(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("COPILOT_METRICS_DAYS", "abc")
+        with pytest.raises(SystemExit) as exc_info:
+            get_report_window_days()
+        assert exc_info.value.code == 1
+
+
+class TestFetchDailyReports:
+    def test_concatenates_specific_day_reports(self) -> None:
+        api_client = MagicMock(spec=httpx.Client)
+        download_client = MagicMock(spec=httpx.Client)
+        report_days = [date(2025, 1, 1), date(2025, 1, 2)]
+
+        api_client.get.side_effect = [
+            _mock_httpx_response(
+                json_data={"download_links": ["https://example.com/day1.ndjson"]}
+            ),
+            _mock_httpx_response(
+                json_data={"download_links": ["https://example.com/day2.ndjson"]}
+            ),
+        ]
+        download_client.get.side_effect = [
+            _mock_httpx_response(content=_make_ndjson_bytes([{"day": "2025-01-01", "value": 1}])),
+            _mock_httpx_response(content=_make_ndjson_bytes([{"day": "2025-01-02", "value": 2}])),
+        ]
+
+        df = fetch_daily_reports(
+            api_client,
+            download_client,
+            "/orgs/test/copilot/metrics/reports/organization-1-day?day={day}",
+            report_days,
+        )
+
+        assert df["day"].to_list() == ["2025-01-01", "2025-01-02"]
+        assert df["value"].to_list() == [1, 2]
 
 
 # ---------- save_ndjson ----------

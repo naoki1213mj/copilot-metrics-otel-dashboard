@@ -1,16 +1,20 @@
 """src.transform モジュールのテスト。"""
 
 import json
-import sys
 
 import polars as pl
 import pytest
 
 from src.transform import (
+    LANGUAGE_METRIC_COLUMNS,
     METRIC_COLUMNS,
+    ORG_DAILY_METRIC_COLUMNS,
+    USER_FLAG_COLUMNS,
     ensure_columns,
     main,
     transform_daily_summary,
+    transform_language_summary,
+    transform_user_daily_summary,
     transform_user_summary,
 )
 
@@ -21,17 +25,30 @@ from src.transform import (
 
 
 def test_ensure_columns_adds_missing():
-    """METRIC_COLUMNS に含まれるカラムが欠けている場合、0 で補完される。"""
+    """数値・真偽値カラムが欠けている場合、既定値で補完される。"""
     df = pl.DataFrame({"day": ["2025-01-01"], "total_active_users": [5]})
-    result = ensure_columns(df, METRIC_COLUMNS)
+    result = ensure_columns(
+        df,
+        {
+            **{col: 0 for col in METRIC_COLUMNS},
+            **{col: 0 for col in ORG_DAILY_METRIC_COLUMNS},
+            **{col: False for col in USER_FLAG_COLUMNS},
+        },
+    )
 
     for col in METRIC_COLUMNS:
+        assert col in result.columns, f"{col} が追加されていない"
+    for col in ORG_DAILY_METRIC_COLUMNS:
+        assert col in result.columns, f"{col} が追加されていない"
+    for col in USER_FLAG_COLUMNS:
         assert col in result.columns, f"{col} が追加されていない"
 
     # 新規追加されたカラムの値は 0
     row = result.to_dicts()[0]
     assert row["chat_panel_agent_mode"] == 0
     assert row["agent_edit"] == 0
+    assert row["monthly_active_agent_users"] == 0
+    assert row["used_copilot_coding_agent"] is False
 
 
 def test_ensure_columns_preserves_existing():
@@ -41,13 +58,21 @@ def test_ensure_columns_preserves_existing():
             "day": ["2025-01-01"],
             "total_active_users": [42],
             "user_initiated_interaction_count": [100],
+            "used_copilot_coding_agent": [True],
         }
     )
-    result = ensure_columns(df, METRIC_COLUMNS)
+    result = ensure_columns(
+        df,
+        {
+            **{col: 0 for col in METRIC_COLUMNS},
+            **{col: False for col in USER_FLAG_COLUMNS},
+        },
+    )
     row = result.to_dicts()[0]
 
     assert row["total_active_users"] == 42
     assert row["user_initiated_interaction_count"] == 100
+    assert row["used_copilot_coding_agent"] is True
 
 
 # ---------------------------------------------------------------------------
@@ -80,8 +105,56 @@ def test_transform_daily_summary_has_correct_keys():
         [{"day": "2025-01-01", "total_active_users": 5}]
     )
     result = transform_daily_summary(df)
-    expected_keys = {"day", *METRIC_COLUMNS}
+    expected_keys = {"day", *METRIC_COLUMNS, *ORG_DAILY_METRIC_COLUMNS}
     assert set(result[0].keys()) == expected_keys
+
+
+def test_transform_daily_summary_fills_missing_official_metrics():
+    """新しい公式日次メトリクスが欠けていても 0 で補完されること。"""
+    df = _make_org_df(
+        [{"day": "2025-01-01", "total_active_users": 5}]
+    )
+    result = transform_daily_summary(df)
+
+    assert result[0]["monthly_active_agent_users"] == 0
+    assert result[0]["copilot_coding_agent_active_users_1d"] == 0
+    assert result[0]["copilot_coding_agent_active_users_7d"] == 0
+    assert result[0]["copilot_coding_agent_active_users_28d"] == 0
+
+
+def test_transform_language_summary_flattens_nested_breakdown():
+    """totals_by_language_feature を日次の言語別レコードに展開できること。"""
+    df = _make_org_df(
+        [
+            {
+                "day": "2025-01-01",
+                "totals_by_language_feature": [
+                    {
+                        "language": "python",
+                        "feature": "code_completion",
+                        "user_initiated_interaction_count": 6,
+                        "code_generation_activity_count": 10,
+                        "code_acceptance_activity_count": 4,
+                    },
+                    {
+                        "language": "hcl",
+                        "feature": "chat_panel_agent_mode",
+                        "user_initiated_interaction_count": 2,
+                        "code_generation_activity_count": 8,
+                        "code_acceptance_activity_count": 3,
+                    },
+                ],
+            }
+        ]
+    )
+
+    result = transform_language_summary(df)
+
+    assert len(result) == 2
+    assert result[0]["day"] == "2025-01-01"
+    assert result[0]["language"] == "python"
+    assert result[1]["language"] == "hcl"
+    assert all(metric in result[0] for metric in LANGUAGE_METRIC_COLUMNS)
 
 
 # ---------------------------------------------------------------------------
@@ -151,6 +224,46 @@ def test_transform_user_summary_has_active_days():
     assert by_user["bob"]["active_days"] == 1
 
 
+def test_transform_user_summary_aggregates_official_flags():
+    """公式フラグは日数集計と観測期間内の利用有無に集約されること。"""
+    df = _make_user_df(
+        [
+            {
+                "user_login": "alice",
+                "day": "2025-01-01",
+                "user_initiated_interaction_count": 10,
+                "used_copilot_coding_agent": True,
+                "used_copilot_code_review_active": False,
+                "used_copilot_code_review_passive": True,
+            },
+            {
+                "user_login": "alice",
+                "day": "2025-01-02",
+                "user_initiated_interaction_count": 10,
+                "used_copilot_coding_agent": False,
+                "used_copilot_code_review_active": True,
+                "used_copilot_code_review_passive": False,
+            },
+            {
+                "user_login": "bob",
+                "day": "2025-01-01",
+                "user_initiated_interaction_count": 1,
+            },
+        ]
+    )
+    result = transform_user_summary(df)
+
+    by_user = {r["user_login"]: r for r in result}
+    assert by_user["alice"]["used_copilot_coding_agent"] is True
+    assert by_user["alice"]["used_copilot_coding_agent_days"] == 1
+    assert by_user["alice"]["used_copilot_code_review_active"] is True
+    assert by_user["alice"]["used_copilot_code_review_active_days"] == 1
+    assert by_user["alice"]["used_copilot_code_review_passive"] is True
+    assert by_user["alice"]["used_copilot_code_review_passive_days"] == 1
+    assert by_user["bob"]["used_copilot_coding_agent"] is False
+    assert by_user["bob"]["used_copilot_coding_agent_days"] == 0
+
+
 def test_transform_user_summary_sorted_by_interactions():
     """user_initiated_interaction_count 降順でソートされること。"""
     rows = [
@@ -162,6 +275,32 @@ def test_transform_user_summary_sorted_by_interactions():
     result = transform_user_summary(df)
     logins = [r["user_login"] for r in result]
     assert logins == ["high", "mid", "low"]
+
+
+def test_transform_user_daily_summary_removes_user_id_and_sorts():
+    """日次ユーザーデータは user_id を除外し、day / user_login で並ぶこと。"""
+    df = _make_user_df(
+        [
+            {
+                "user_login": "bob",
+                "user_id": 2,
+                "day": "2025-01-02",
+                "user_initiated_interaction_count": 3,
+            },
+            {
+                "user_login": "alice",
+                "user_id": 1,
+                "day": "2025-01-01",
+                "user_initiated_interaction_count": 2,
+            },
+        ]
+    )
+
+    result = transform_user_daily_summary(df)
+
+    assert [row["user_login"] for row in result] == ["alice", "bob"]
+    assert all("user_id" not in row for row in result)
+    assert "used_copilot_coding_agent" in result[0]
 
 
 # ---------------------------------------------------------------------------
@@ -230,6 +369,8 @@ def test_main_end_to_end(monkeypatch, tmp_path):
     assert len(daily) == 3
     assert daily[0]["day"] == "2025-01-01"
     assert "total_active_users" in daily[0]
+    assert "monthly_active_agent_users" in daily[0]
+    assert "copilot_coding_agent_active_users_28d" in daily[0]
 
     # user_summary.json の検証
     user_path = out_dir / "user_summary.json"
@@ -240,3 +381,16 @@ def test_main_end_to_end(monkeypatch, tmp_path):
         assert "user_login" in row
         assert "active_days" in row
         assert "user_id" not in row
+        assert "used_copilot_coding_agent" in row
+        assert "used_copilot_coding_agent_days" in row
+
+    user_daily_path = out_dir / "user_daily_summary.json"
+    assert user_daily_path.exists()
+    user_daily = json.loads(user_daily_path.read_text(encoding="utf-8"))
+    assert len(user_daily) == 4
+    assert all("user_id" not in row for row in user_daily)
+
+    language_path = out_dir / "language_summary.json"
+    assert language_path.exists()
+    languages = json.loads(language_path.read_text(encoding="utf-8"))
+    assert isinstance(languages, list)
