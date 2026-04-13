@@ -1,0 +1,13 @@
+name: copilot-metrics-dashboard
+metadata:
+  template: copilot-metrics-dashboard
+services:
+  dashboard:
+    project: ./dashboard
+    dist: dist
+    language: js
+    host: staticwebapp
+    hooks:
+      predeploy:
+        shell: sh
+        run: cd dashboard && npm install && npm run build
