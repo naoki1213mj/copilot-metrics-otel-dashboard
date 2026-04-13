@@ -6,7 +6,7 @@ topics: ["GitHubCopilot", "Python", "React", "Azure"]
 published: false
 ---
 
-こんにちは、日本マイクロソフトの中尾です。
+こんにちは
 
 この記事は [GitHub Copilot 活用選手権](https://zenn.dev/contests/github-2026-spring)への投稿です。
 
@@ -744,6 +744,19 @@ AGENTS.md に「間違えやすい API」テーブルを書いておいたのが
 
 `agent_edit` フィールド（Agent/Edit モードでの行追加・削除）も追加されていて、「AI がどれだけコードを実際に書いたか」の定量化ができそうです。ここは自分ではまだ活用できていませんが、Copilot の ROI 議論ではキーになるフィールドだと思います。
 
+### さらに最近のアップデート（2026 年 4 月）
+
+この記事を書いている間にも、GitHub は usage metrics API の拡張を続けています。4 月だけでも以下の変更が入りました。
+
+- [2026-04-10](https://github.blog/changelog/2026-04-10-copilot-usage-metrics-now-aggregate-copilot-cloud-agent-active-user-counts/): Copilot cloud agent（旧 coding agent）のアクティブユーザー数が集計フィールドとして 1-day / 28-day レポートに追加（nullable で、データがない期間は null）
+- [2026-04-10](https://github.blog/changelog/2026-04-10-copilot-cli-activity-now-included-in-usage-metrics-totals-and-feature-breakdowns/): Copilot CLI の利用データが totals と feature breakdowns に統合
+- [2026-04-08](https://github.blog/changelog/2026-04-08-copilot-reviewed-pull-request-merge-metrics-now-in-the-usage-metrics-api/): Copilot がレビューした PR のマージメトリクスが追加
+- [2026-04-06](https://github.blog/changelog/2026-04-06-copilot-usage-metrics-now-identify-active-and-passive-copilot-code-review-users/): code review ユーザーを active / passive に区別できるフィールド（`used_copilot_code_review_active` / `_passive`）
+
+特に cloud agent の集計済みフィールドが入ったのは素直に嬉しいです。これまで Organization レポートから cloud agent の利用状況を見るには、ユーザー単位レポートの `used_copilot_coding_agent` フラグを自前で集計する必要がありましたが、これが Organization レポート側に集計済みで入ってくるようになりました。
+
+この動きを見ていると、GitHub は「組織管理者が Copilot 導入の ROI を説明するために欲しがりそうなフィールド」を優先的に追加している印象です。半年後にはまた別の軸が増えているはずで、ダッシュボードも定期的にアップデートが必要になりそうです。
+
 ## Azure Static Web Apps にデプロイする
 
 ローカルで動くことを確認できたので、Azure にデプロイしてチームで共有できるようにします。元リポジトリ（microsoft/copilot-metrics-dashboard）は Azure App Service + Azure Functions を使っていますが、今回の構成は静的サイトなので Azure Static Web Apps のほうがシンプルです。
@@ -978,7 +991,7 @@ Free プランのリージョン制約（`eastasia` は使えるが `japaneast` 
 
 残った宿題として、実 Organization データでの動作検証があります。今回はモックデータで完結させましたが、権限が揃う機会があればフィールド欠落や規模感のズレを確認して、別の記事でフォローアップしたいと思っています。
 
-次は GitHub Actions での日次データ更新の自動化と、Lines of Code メトリクスの可視化をやってみたいなと思っています。
+次は GitHub Actions での日次データ更新の自動化と、Lines of Code メトリクスの可視化をやってみたいなと思っています。4 月の API 拡張で追加された Copilot cloud agent アクティブユーザー数や PR マージメトリクスの可視化も興味があります。API が継続的に拡張されていく前提で、ダッシュボードも定期的にアップデートしていく運用が現実的そうです。
 
 ## 参考リンク
 
@@ -1000,6 +1013,14 @@ Changelog:
 https://github.blog/changelog/2026-02-27-copilot-metrics-is-now-generally-available/
 
 https://github.blog/changelog/2026-01-29-closing-down-notice-of-legacy-copilot-metrics-apis/
+
+https://github.blog/changelog/2026-04-10-copilot-usage-metrics-now-aggregate-copilot-cloud-agent-active-user-counts/
+
+https://github.blog/changelog/2026-04-10-copilot-cli-activity-now-included-in-usage-metrics-totals-and-feature-breakdowns/
+
+https://github.blog/changelog/2026-04-08-copilot-reviewed-pull-request-merge-metrics-now-in-the-usage-metrics-api/
+
+https://github.blog/changelog/2026-04-06-copilot-usage-metrics-now-identify-active-and-passive-copilot-code-review-users/
 <!-- markdownlint-enable MD034 -->
 
 リポジトリ:
