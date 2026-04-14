@@ -1,6 +1,8 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
+*.egg-info/
 .venv/
 .ruff_cache/
 .pytest_cache/
@@ -15,19 +17,44 @@ dashboard/dist/
 .python-version
 requirements.txt
 
-# 環境変数
+# 環境変数・シークレット（.env.example は除外しない）
 .env
-.env.local
+.env.*
+!.env.example
+
+# Azure Functions ローカル設定
+local.settings.json
+local_settings.json
 
 # azd
 .azure/
 
-# Windows
-Thumbs.db
+# IDE / エディタ
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# データ出力
+# OS
+Thumbs.db
+.DS_Store
+
+# データ出力（モックデータや実データが混在する場合に備える）
 data/raw/
+data/snapshots/
 dashboard/public/data/*.json
 dashboard/public/data/*.ndjson
 
-.python_packages
+# Azure Functions remote build 成果物
+.python_packages/
+
+# 証明書・鍵ファイル
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+
+# Bicep コンパイル出力（azd が自動生成）
+infra/main.json
