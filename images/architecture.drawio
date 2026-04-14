@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="Architecture" id="arch-01">
-        <mxGraphModel dx="1578" dy="770" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="1200" math="0" shadow="0">
+        <mxGraphModel dx="1082" dy="711" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="1200" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -10,10 +10,10 @@
                 <mxCell id="dev-vscode" value="" style="image;aspect=fixed;html=1;points=[];align=center;image=img/lib/azure2/general/Code.svg;" parent="1" vertex="1">
                     <mxGeometry x="108" y="205" width="72" height="72" as="geometry"/>
                 </mxCell>
-                <mxCell id="dev-title" value="VS Code" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=15;fontStyle=1;fontColor=#111827;" vertex="1" parent="1">
+                <mxCell id="dev-title" value="VS Code" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=15;fontStyle=1;fontColor=#111827;" parent="1" vertex="1">
                     <mxGeometry x="91" y="288" width="110" height="28" as="geometry"/>
                 </mxCell>
-                <mxCell id="dev-subtitle" value="GitHub Copilot + Copilot CLI" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=13;fontColor=#374151;" vertex="1" parent="1">
+                <mxCell id="dev-subtitle" value="GitHub Copilot + Copilot CLI" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=13;fontColor=#374151;" parent="1" vertex="1">
                     <mxGeometry x="46" y="323" width="220" height="32" as="geometry"/>
                 </mxCell>
                 <mxCell id="zone-github" value="GitHub" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3f0f6;strokeColor=#333333;verticalAlign=top;fontSize=18;fontStyle=1;align=center;strokeWidth=2;" parent="1" vertex="1">
@@ -31,7 +31,7 @@
                 <mxCell id="zone-azure" value="Azure サブスクリプション" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf4ff;strokeColor=#4A90D9;verticalAlign=top;fontSize=20;fontStyle=1;align=center;strokeWidth=3;" parent="1" vertex="1">
                     <mxGeometry x="710" y="90" width="920" height="910" as="geometry"/>
                 </mxCell>
-                <mxCell id="azure-note" value="デプロイ済みアプリ + Bicep で確認済み&#xa;Function ホストストレージ: Managed Identity&#xa;データ経路: App Service → Functions → Blob JSON" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9cc;strokeColor=#d6b656;fontSize=13;align=left;spacing=8;" vertex="1" parent="1">
+                <mxCell id="azure-note" value="デプロイ済みアプリ + Bicep で確認済み&#xa;Function ホストストレージ: Managed Identity&#xa;データ経路: App Service → Functions → Blob JSON" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9cc;strokeColor=#d6b656;fontSize=13;align=left;spacing=8;" parent="1" vertex="1">
                     <mxGeometry x="775" y="150" width="335" height="118" as="geometry"/>
                 </mxCell>
                 <mxCell id="browser" value="ブラウザ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#0078D4;fontColor=#0078D4;fontSize=14;fontStyle=1;align=center;" parent="1" vertex="1">
@@ -40,73 +40,73 @@
                 <mxCell id="func-app" value="" style="image;aspect=fixed;html=1;points=[];align=center;image=img/lib/azure2/compute/Function_Apps.svg;" parent="1" vertex="1">
                     <mxGeometry x="790" y="310" width="72" height="72" as="geometry"/>
                 </mxCell>
-                <mxCell id="func-title" value="Azure Functions" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" vertex="1" parent="1">
-                    <mxGeometry x="718" y="392" width="220" height="30" as="geometry"/>
+                <mxCell id="func-title" value="Azure Functions" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" parent="1" vertex="1">
+                    <mxGeometry x="716" y="382" width="220" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="func-desc" value="Python 3.12 データ取り込み + ダッシュボード API" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" vertex="1" parent="1">
-                    <mxGeometry x="670" y="426" width="315" height="32" as="geometry"/>
+                <mxCell id="func-desc" value="Python 3.12 データ取り込み + ダッシュボード API" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" parent="1" vertex="1">
+                    <mxGeometry x="710" y="400" width="315" height="32" as="geometry"/>
                 </mxCell>
                 <mxCell id="app-service" value="" style="image;aspect=fixed;html=1;points=[];align=center;image=img/lib/azure2/app_services/App_Services.svg;" parent="1" vertex="1">
                     <mxGeometry x="1110" y="310" width="72" height="72" as="geometry"/>
                 </mxCell>
-                <mxCell id="app-title" value="App Service" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" vertex="1" parent="1">
+                <mxCell id="app-title" value="App Service" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" parent="1" vertex="1">
                     <mxGeometry x="1030" y="392" width="230" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="app-desc" value="React ダッシュボード配信 + /api/data プロキシ" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" vertex="1" parent="1">
+                <mxCell id="app-desc" value="React ダッシュボード配信 + /api/data プロキシ" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" parent="1" vertex="1">
                     <mxGeometry x="985" y="426" width="320" height="32" as="geometry"/>
                 </mxCell>
                 <mxCell id="app-insights" value="" style="image;aspect=fixed;html=1;points=[];align=center;image=img/lib/azure2/devops/Application_Insights.svg;" parent="1" vertex="1">
                     <mxGeometry x="1455" y="310" width="72" height="72" as="geometry"/>
                 </mxCell>
-                <mxCell id="ai-title" value="Application Insights" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" vertex="1" parent="1">
+                <mxCell id="ai-title" value="Application Insights" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" parent="1" vertex="1">
                     <mxGeometry x="1360" y="392" width="270" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="ai-desc" value="OTel トレース + リクエスト監視" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" vertex="1" parent="1">
+                <mxCell id="ai-desc" value="OTel トレース + リクエスト監視" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" parent="1" vertex="1">
                     <mxGeometry x="1365" y="426" width="250" height="32" as="geometry"/>
                 </mxCell>
                 <mxCell id="key-vault" value="" style="image;aspect=fixed;html=1;points=[];align=center;image=img/lib/azure2/security/Key_Vaults.svg;" parent="1" vertex="1">
                     <mxGeometry x="730" y="590" width="72" height="72" as="geometry"/>
                 </mxCell>
-                <mxCell id="kv-title" value="Key Vault" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" vertex="1" parent="1">
+                <mxCell id="kv-title" value="Key Vault" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" parent="1" vertex="1">
                     <mxGeometry x="665" y="674" width="200" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="kv-desc" value="GitHub トークン + ホストシークレット" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" vertex="1" parent="1">
-                    <mxGeometry x="615" y="709" width="300" height="32" as="geometry"/>
+                <mxCell id="kv-desc" value="GitHub トークン + &lt;br&gt;ホストシークレット" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="697" width="150" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="blob-storage" value="" style="image;aspect=fixed;html=1;points=[];align=center;image=img/lib/azure2/general/Storage_Container.svg;" parent="1" vertex="1">
                     <mxGeometry x="955" y="590" width="72" height="72" as="geometry"/>
                 </mxCell>
-                <mxCell id="blob-title" value="Blob Storage" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" vertex="1" parent="1">
+                <mxCell id="blob-title" value="Blob Storage" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" parent="1" vertex="1">
                     <mxGeometry x="885" y="674" width="215" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="blob-desc" value="raw-metrics / curated-metrics&#xa;dashboard-data" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" vertex="1" parent="1">
+                <mxCell id="blob-desc" value="raw-metrics / curated-metrics&#xa;dashboard-data" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" parent="1" vertex="1">
                     <mxGeometry x="800" y="709" width="370" height="38" as="geometry"/>
                 </mxCell>
                 <mxCell id="cosmos-db" value="" style="image;aspect=fixed;html=1;points=[];align=center;image=img/lib/azure2/databases/Azure_Cosmos_DB.svg;" parent="1" vertex="1">
-                    <mxGeometry x="1180" y="590" width="72" height="72" as="geometry"/>
+                    <mxGeometry x="1190" y="590" width="72" height="72" as="geometry"/>
                 </mxCell>
-                <mxCell id="cosmos-title" value="Cosmos DB" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" vertex="1" parent="1">
-                    <mxGeometry x="1110" y="674" width="212" height="30" as="geometry"/>
+                <mxCell id="cosmos-title" value="Cosmos DB" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" parent="1" vertex="1">
+                    <mxGeometry x="1120" y="674" width="212" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="cosmos-desc" value="usageMetrics / ingestionRuns&#xa;dashboardViews" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" vertex="1" parent="1">
-                    <mxGeometry x="1035" y="709" width="355" height="38" as="geometry"/>
+                <mxCell id="cosmos-desc" value="usageMetrics / ingestionRuns&#xa;dashboardViews" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" parent="1" vertex="1">
+                    <mxGeometry x="1067" y="703" width="355" height="38" as="geometry"/>
                 </mxCell>
                 <mxCell id="log-analytics" value="" style="image;aspect=fixed;html=1;points=[];align=center;image=img/lib/azure2/analytics/Log_Analytics_Workspaces.svg;" parent="1" vertex="1">
                     <mxGeometry x="1455" y="590" width="72" height="72" as="geometry"/>
                 </mxCell>
-                <mxCell id="la-title" value="Log Analytics" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" vertex="1" parent="1">
+                <mxCell id="la-title" value="Log Analytics" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" parent="1" vertex="1">
                     <mxGeometry x="1383" y="674" width="220" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="la-desc" value="プラットフォームログ + 診断" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" vertex="1" parent="1">
+                <mxCell id="la-desc" value="プラットフォームログ + 診断" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" parent="1" vertex="1">
                     <mxGeometry x="1340" y="709" width="300" height="32" as="geometry"/>
                 </mxCell>
                 <mxCell id="asp" value="" style="image;aspect=fixed;html=1;points=[];align=center;image=img/lib/azure2/app_services/App_Service_Plans.svg;" parent="1" vertex="1">
                     <mxGeometry x="995" y="820" width="72" height="72" as="geometry"/>
                 </mxCell>
-                <mxCell id="asp-title" value="App Service Plan" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" vertex="1" parent="1">
+                <mxCell id="asp-title" value="App Service Plan" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=17;fontStyle=1;fontColor=#111827;" parent="1" vertex="1">
                     <mxGeometry x="900" y="908" width="260" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="asp-desc" value="P1v3 / Linux（Web と Function で共有）" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" vertex="1" parent="1">
+                <mxCell id="asp-desc" value="P1v3 / Linux（Web と Function で共有）" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;fontSize=14;fontColor=#4b5563;" parent="1" vertex="1">
                     <mxGeometry x="830" y="945" width="390" height="32" as="geometry"/>
                 </mxCell>
                 <mxCell id="legend" value="凡例&#xa;1. GitHub API が download_links → NDJSON を返す&#xa;2. Function がデータを取り込み・正規化&#xa;3. App Service が UI 配信 + /api/data をプロキシ&#xa;4. App / Function が Application Insights にテレメトリ送信&#xa;5. App Insights とリソース診断が Log Analytics に集約" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#f0b429;fontSize=13;align=left;spacing=8;" parent="1" vertex="1">
@@ -141,51 +141,59 @@
                 <mxCell id="e-app-func" value="3. /api/data/*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=2;strokeColor=#7c3aed;fontSize=12;fontColor=#7c3aed;labelBackgroundColor=#ffffff;" parent="1" source="app-service" target="func-app" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="e-func-kv" value="Managed Identity" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.8;strokeColor=#d97706;dashed=1;fontSize=12;fontColor=#d97706;labelBackgroundColor=#ffffff;" parent="1" source="func-app" target="key-vault" edge="1">
-                    <mxGeometry relative="1" as="geometry">
+                <mxCell id="e-func-kv" value="Managed Identity" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.8;strokeColor=#d97706;dashed=1;fontSize=12;fontColor=#d97706;labelBackgroundColor=#ffffff;" parent="1" target="key-vault" edge="1">
+                    <mxGeometry x="0.2537" y="4" relative="1" as="geometry">
                         <Array as="points">
+                            <mxPoint x="807" y="470"/>
                             <mxPoint x="766" y="470"/>
-                            <mxPoint x="766" y="626"/>
                         </Array>
+                        <mxPoint as="offset"/>
+                        <mxPoint x="807" y="430" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e-func-blob" value="2. raw + 変換済み JSON" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=2;strokeColor=#2d7d46;fontSize=12;fontColor=#2d7d46;labelBackgroundColor=#ffffff;" parent="1" source="func-app" target="blob-storage" edge="1">
+                <mxCell id="e-func-blob" value="2. raw + 変換済み JSON" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=2;strokeColor=#2d7d46;fontSize=12;fontColor=#2d7d46;labelBackgroundColor=#ffffff;" parent="1" target="blob-storage" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="826" y="470"/>
                             <mxPoint x="991" y="470"/>
                         </Array>
+                        <mxPoint x="826" y="430" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e-func-cosmos" value="2. 実行メタデータ" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=2;strokeColor=#2563eb;fontSize=12;fontColor=#2563eb;labelBackgroundColor=#ffffff;" parent="1" source="func-app" target="cosmos-db" edge="1">
+                <mxCell id="e-func-cosmos" value="2. 実行メタデータ" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=2;strokeColor=#2563eb;fontSize=12;fontColor=#2563eb;labelBackgroundColor=#ffffff;" parent="1" target="cosmos-db" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
+                            <mxPoint x="850" y="505"/>
                             <mxPoint x="1216" y="505"/>
                         </Array>
+                        <mxPoint x="850" y="430" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="e-app-otel" value="4. トレース" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.8;strokeColor=#dc2626;dashed=1;fontSize=12;fontColor=#dc2626;labelBackgroundColor=#ffffff;" parent="1" source="app-service" target="app-insights" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="e-func-otel" value="4. トレース" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.8;strokeColor=#dc2626;dashed=1;fontSize=12;fontColor=#dc2626;labelBackgroundColor=#ffffff;" parent="1" source="func-app" target="app-insights" edge="1">
-                    <mxGeometry relative="1" as="geometry">
+                    <mxGeometry x="0.1696" relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="826" y="270"/>
-                            <mxPoint x="1491" y="270"/>
+                            <mxPoint x="826" y="280"/>
+                            <mxPoint x="1491" y="280"/>
                         </Array>
+                        <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="e-ai-la" value="5. 診断ログ" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.8;strokeColor=#6b7280;dashed=1;fontSize=12;fontColor=#6b7280;labelBackgroundColor=#ffffff;" parent="1" source="app-insights" target="log-analytics" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="e-plan-func" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.4;strokeColor=#6b7280;dashed=1;fontSize=10;fontColor=#6b7280;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="asp" target="func-app">
+                <mxCell id="e-plan-func" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.4;strokeColor=#6b7280;dashed=1;fontSize=10;fontColor=#6b7280;labelBackgroundColor=#ffffff;" parent="1" source="asp" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="826" y="760"/>
+                            <mxPoint x="1031" y="760"/>
+                            <mxPoint x="840" y="760"/>
                         </Array>
+                        <mxPoint x="840" y="430" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e-plan-app" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.4;strokeColor=#6b7280;dashed=1;fontSize=10;fontColor=#6b7280;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="asp" target="app-service">
+                <mxCell id="e-plan-app" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeWidth=1.4;strokeColor=#6b7280;dashed=1;fontSize=10;fontColor=#6b7280;labelBackgroundColor=#ffffff;" parent="1" source="asp" target="app-service" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="1146" y="760"/>
