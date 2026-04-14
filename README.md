@@ -9,25 +9,25 @@ It fetches organization-level Copilot metrics, transforms the raw NDJSON into da
 
 ## Architecture
 
-![Architecture](./articles/images/architecture.png)
+![Architecture](./images/architecture.png)
 
 ## Screenshots
 
 ### Overview tab
 
-![Overview](./articles/images/overview.png)
+![Overview](./images/overview.png)
 
 DAU trends, prompt volume, acceptance rate, language breakdown.
 
 ### Agent tab
 
-![Agent](./articles/images/agent.png)
+![Agent](./images/agent.png)
 
 Agent adoption, mode breakdown (Ask / Edit / Agent), coding agent active users.
 
 ### Diagnostics tab
 
-![Diagnostics](./articles/images/diagnostics.png)
+![Diagnostics](./images/diagnostics.png)
 
 User-level activity, review engagement, code generation volume.
 

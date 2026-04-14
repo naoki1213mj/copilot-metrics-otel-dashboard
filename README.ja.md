@@ -9,25 +9,25 @@ Organization レベルの Copilot メトリクスを取得し、NDJSON をダッ
 
 ## アーキテクチャ
 
-![Architecture](./articles/images/architecture.png)
+![Architecture](./images/architecture.png)
 
 ## スクリーンショット
 
 ### Overview タブ
 
-![Overview](./articles/images/overview.png)
+![Overview](./images/overview.png)
 
 DAU 推移、プロンプト量、承認率、言語別 activity。
 
 ### Agent タブ
 
-![Agent](./articles/images/agent.png)
+![Agent](./images/agent.png)
 
 Agent 利用浸透度、モード構成比（Ask / Edit / Agent）、coding agent active users。
 
 ### Diagnostics タブ
 
-![Diagnostics](./articles/images/diagnostics.png)
+![Diagnostics](./images/diagnostics.png)
 
 ユーザー別利用濃度、review engagement、コード生成量。
 
