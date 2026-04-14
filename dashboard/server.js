@@ -153,6 +153,7 @@ const server = createServer(async (request, response) => {
 
   const requestUrl = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
   const pathname = requestUrl.pathname;
+  const staticPathname = pathname === '/' ? '/index.html' : pathname;
 
   if (pathname === '/healthz') {
     sendJson(response, 200, { ok: true });
@@ -173,8 +174,8 @@ const server = createServer(async (request, response) => {
 
   if (assetPath && existsSync(assetPath) && statSync(assetPath).isFile()) {
     response.statusCode = 200;
-    response.setHeader('Cache-Control', getCacheControl(pathname));
-    response.setHeader('Content-Type', getMimeType(pathname));
+    response.setHeader('Cache-Control', getCacheControl(staticPathname));
+    response.setHeader('Content-Type', getMimeType(staticPathname));
 
     if (method === 'HEAD') {
       response.end();

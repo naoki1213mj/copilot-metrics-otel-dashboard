@@ -55,7 +55,7 @@ Azure App Service
 
 ## Prerequisites
 
-- Python **3.13+** managed with `uv`
+- Python **3.12+** managed with `uv`
 - Node.js and npm
 - Azure CLI and Azure Developer CLI (`azd`) for cloud deployment
 - A GitHub Personal Access Token with access to your organization metrics when using live data
@@ -121,6 +121,32 @@ The local Vite app reads JSON files from `dashboard/public/data/`.
 | `uv run pytest` | Run Python tests |
 | `cd dashboard && npm run build` | Build the dashboard |
 | `az bicep build --file infra\main.bicep` | Validate Bicep compilation |
+
+## Release checklist
+
+Use this checklist before publishing a new validation result or updating the Zenn article.
+
+### Local validation
+
+1. `uv run ruff check .`
+2. `uv run pytest tests\ -v`
+3. `cd dashboard && npm run build`
+4. `az bicep build --file infra\main.bicep`
+
+### Azure validation with mock data
+
+1. Deploy the latest code to Azure
+2. Call `POST /api/ingestion/run` with `{"source":"mock"}`
+3. Confirm `GET /api/ingestion/status` returns `ready`
+4. Confirm `GET /api/data/daily_summary.json` returns `200`
+5. Confirm the App Service dashboard returns `200`
+
+### What this checklist proves
+
+- Azure App Service and Azure Functions are both alive
+- The ingestion path works end to end with mock data
+- Dashboard JSON snapshots are written and served correctly
+- The article can describe a working Azure validation flow without using live organization data
 
 ## Dashboard tabs
 

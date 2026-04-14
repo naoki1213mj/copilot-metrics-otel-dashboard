@@ -55,7 +55,7 @@ Azure App Service
 
 ## 前提
 
-- `uv` で管理する Python **3.13+**
+- `uv` で管理する Python **3.12+**
 - Node.js / npm
 - Azure CLI / Azure Developer CLI (`azd`)
 - 実データを使う場合は Organization メトリクスにアクセスできる GitHub PAT
@@ -121,6 +121,32 @@ npm run dev
 | `uv run pytest` | Python テスト実行 |
 | `cd dashboard && npm run build` | ダッシュボードのビルド |
 | `az bicep build --file infra\main.bicep` | Bicep のコンパイル確認 |
+
+## リリース前チェックリスト
+
+Zenn の検証記事を更新する前や、検証結果を公開する前に次を確認します。
+
+### ローカル確認
+
+1. `uv run ruff check .`
+2. `uv run pytest tests\ -v`
+3. `cd dashboard && npm run build`
+4. `az bicep build --file infra\main.bicep`
+
+### Azure 上の mock 検証
+
+1. 最新コードを Azure にデプロイする
+2. `POST /api/ingestion/run` に `{"source":"mock"}` を送る
+3. `GET /api/ingestion/status` が `ready` を返すことを確認する
+4. `GET /api/data/daily_summary.json` が `200` を返すことを確認する
+5. App Service のダッシュボードが `200` を返すことを確認する
+
+### このチェックで確認できること
+
+- Azure App Service と Azure Functions の両方が生きている
+- mock データで ingestion が end-to-end で動く
+- ダッシュボード用 JSON が生成・配信できる
+- 実データを使わなくても、Azure 実機検証の記事が書ける
 
 ## ダッシュボードの見どころ
 
