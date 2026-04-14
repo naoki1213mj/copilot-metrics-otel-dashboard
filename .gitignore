@@ -52,6 +52,10 @@ dashboard/public/data/*.ndjson
 # 記事下書き
 articles/
 
+# カスタム命令・エージェント定義（ノウハウのため非公開）
+.github/
+AGENTS.md
+
 # 証明書・鍵ファイル
 *.pem
 *.key
