@@ -1,9 +1,35 @@
 # copilot-metrics-otel-dashboard
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
 [日本語版はこちら](./README.ja.md)
 
 A GitHub Copilot usage metrics dashboard built with **Python + React + Azure**.  
 It fetches organization-level Copilot metrics, transforms the raw NDJSON into dashboard-friendly JSON, and serves a tabbed UI backed by Azure App Service and Azure Functions.
+
+## Architecture
+
+![Architecture](./articles/images/architecture.png)
+
+## Screenshots
+
+### Overview tab
+
+![Overview](./articles/images/overview.png)
+
+DAU trends, prompt volume, acceptance rate, language breakdown.
+
+### Agent tab
+
+![Agent](./articles/images/agent.png)
+
+Agent adoption, mode breakdown (Ask / Edit / Agent), coding agent active users.
+
+### Diagnostics tab
+
+![Diagnostics](./articles/images/diagnostics.png)
+
+User-level activity, review engagement, code generation volume.
 
 ## What this project does
 
@@ -14,7 +40,7 @@ It fetches organization-level Copilot metrics, transforms the raw NDJSON into da
 - Emits OpenTelemetry traces to Application Insights when configured
 - Deploys to Azure with **azd**, **Bicep**, **App Service**, **Azure Functions**, **Blob Storage**, **Cosmos DB**, **Key Vault**, **Application Insights**, and **Log Analytics**
 
-## Architecture
+## Architecture (text)
 
 ```text
 GitHub Copilot usage metrics API
@@ -192,3 +218,7 @@ When the connection string is absent, the ingestion code runs without Azure Moni
 
 - Azure service definition: [`azure.yaml`](./azure.yaml)
 - Example environment file: [`.env.example`](./.env.example)
+
+## License
+
+This project is licensed under the [MIT License](./LICENSE).
