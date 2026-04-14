@@ -204,8 +204,9 @@ def copilot_metrics_ingestion_run(
 
 @app.function_name(name="copilotMetricsIngestionStatus")
 @app.route(route="ingestion/status", methods=["GET"])
-def copilot_metrics_ingestion_status(_req: func.HttpRequest) -> func.HttpResponse:
+def copilot_metrics_ingestion_status(req: func.HttpRequest) -> func.HttpResponse:
     """現在の設定と最新実行結果を返す。"""
+    _ = req
     payload = get_ingestion_status()
     status_code = 200 if payload.get("status") == "ready" else 503
     return func.HttpResponse(

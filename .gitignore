@@ -29,3 +29,5 @@ Thumbs.db
 data/raw/
 dashboard/public/data/*.json
 dashboard/public/data/*.ndjson
+
+.python_packages
