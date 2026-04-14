@@ -51,7 +51,6 @@ Azure App Service
 | `infra/` | Bicep templates |
 | `azure.yaml` | azd service definition |
 | `tests/` | Python test suite |
-| `articles/` | Zenn article drafts and notes |
 
 ## Prerequisites
 
@@ -191,6 +190,5 @@ When the connection string is absent, the ingestion code runs without Azure Moni
 
 ## Related files
 
-- Zenn article draft: [`articles/copilot-metrics-dashboard.md`](./articles/copilot-metrics-dashboard.md)
 - Azure service definition: [`azure.yaml`](./azure.yaml)
 - Example environment file: [`.env.example`](./.env.example)

@@ -49,6 +49,9 @@ dashboard/public/data/*.ndjson
 # Azure Functions remote build 成果物
 .python_packages/
 
+# 記事下書き
+articles/
+
 # 証明書・鍵ファイル
 *.pem
 *.key
